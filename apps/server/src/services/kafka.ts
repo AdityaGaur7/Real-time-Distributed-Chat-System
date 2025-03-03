@@ -6,7 +6,7 @@ const kafka = new Kafka({
   clientId: "my-app",
   brokers: ["kafka-28eca38c-adgaur027-82f1.l.aivencloud.com:16028"],
   ssl: {
-    ca: [fs.readFileSync(path.resolve("ca.pem"), "utf-8")],
+    ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
   },
   sasl: {
     mechanism: "plain",
