@@ -1,6 +1,7 @@
 import { Kafka, Producer } from "kafkajs";
 import fs from "fs";
 import path from "path";
+import prismaClient from "./prisma";
 
 const kafka = new Kafka({
   clientId: "my-app",
@@ -13,7 +14,6 @@ const kafka = new Kafka({
     username: "avnadmin",
     password: "AVNS_a1TBC5BIj4IPdZxqMcM",
   },
- 
 });
 
 let producer: Producer | null = null;
@@ -35,4 +35,33 @@ export async function produceMessage(message: string) {
     messages: [{ key: `message-${Date.now()}`, value: message }],
   });
   return true;
+}
+
+export async function startMessageConsumer() {
+  console.log("Starting message consumer is running");
+  const consumer = kafka.consumer({ groupId: "default" });
+  await consumer.connect();
+  await consumer.subscribe({ topic: "MESSAGES", fromBeginning: true });
+  await consumer.run({
+    autoCommit: true,
+    eachMessage: async ({ pause, message }) => {
+      console.log("New Message received");
+      console.log(message.value);
+
+      if (!message.value) return;
+      try {
+        await prismaClient.message.create({
+          data: {
+            text: message.value?.toString(),
+          },
+        });
+      } catch (error) {
+        console.log(error, "Error while saving message to database");
+        pause();
+        setTimeout(() => {
+          consumer.resume([{ topic: "MESSAGES" }]);
+        }, 60 * 1000);
+      }
+    },
+  });
 }
