@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import prismaClient from "./prisma";
 
+// Configure Kafka client with SSL and SASL authentication
 const kafka = new Kafka({
   clientId: "my-app",
   brokers: ["kafka-28eca38c-adgaur027-82f1.l.aivencloud.com:16028"],
@@ -16,8 +17,10 @@ const kafka = new Kafka({
   },
 });
 
+// Cache producer instance to avoid creating multiple connections
 let producer: Producer | null = null;
 
+// Create and cache a singleton producer instance
 export async function createProducer() {
   if (producer) {
     return producer;
@@ -28,6 +31,7 @@ export async function createProducer() {
   return producer;
 }
 
+// Send message to Kafka topic with timestamp-based key
 export async function produceMessage(message: string) {
   const producer = await createProducer();
   await producer.send({
@@ -37,10 +41,12 @@ export async function produceMessage(message: string) {
   return true;
 }
 
+// Initialize Kafka consumer to process messages and store in database
 export async function startMessageConsumer() {
   console.log("Starting message consumer is running");
   const consumer = kafka.consumer({ groupId: "default" });
   await consumer.connect();
+  // Subscribe to MESSAGES topic and process historical messages
   await consumer.subscribe({ topic: "MESSAGES", fromBeginning: true });
   await consumer.run({
     autoCommit: true,
@@ -50,6 +56,7 @@ export async function startMessageConsumer() {
 
       if (!message.value) return;
       try {
+        // Store received message in database
         await prismaClient.message.create({
           data: {
             text: message.value?.toString(),
@@ -57,6 +64,7 @@ export async function startMessageConsumer() {
         });
       } catch (error) {
         console.log(error, "Error while saving message to database");
+        // On error, pause consumption and retry after 1 minute
         pause();
         setTimeout(() => {
           consumer.resume([{ topic: "MESSAGES" }]);
