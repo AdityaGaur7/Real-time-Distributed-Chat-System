@@ -43,12 +43,13 @@ class SocketService {
 
     sub.on("message", (channel, message) => {
       if (channel === "MESSAGES") {
+        console.log("New Message received", message);
         io.emit("event:message", message);
       }
     });
 
     io.on("event:message", (data) => {
-      // Broadcast the message to all connected clients
+      console.log("New Message received", data);
       io.emit("event:message", data);
     });
   }
