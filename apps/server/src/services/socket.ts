@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import Valkey from "iovalkey";
 import { channel } from "diagnostics_channel";
 import prismaClient from "./prisma";
+import { produceMessage } from "./kafka";
 
 const pub = new Valkey({
   host: "valkey-338d5f72-adgaur027-82f1.l.aivencloud.com",
@@ -46,11 +47,13 @@ class SocketService {
       if (channel === "MESSAGES") {
         console.log("New Message received", message);
         io.emit("event:message", message);
-        await prismaClient.message.create({
-          data: {
-            text: message,
-          },
-        });
+        // await prismaClient.message.create({
+        //   data: {
+        //     text: message,
+        //   },
+        // });
+        await produceMessage(message);
+        console.log("Message produced to kafka Broker");
       }
     });
 
