@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import Valkey from "iovalkey";
+import { channel } from "diagnostics_channel";
 
 const pub = new Valkey({
   host: "valkey-338d5f72-adgaur027-82f1.l.aivencloud.com",
@@ -25,6 +26,7 @@ class SocketService {
         origin: "*",
       },
     });
+    sub.subscribe("MESSAGES");
   }
 
   public initListeners() {
@@ -36,8 +38,18 @@ class SocketService {
         console.log("New Message received", message);
 
         await pub.publish("MESSAGES", JSON.stringify({ message }));
-
       });
+    });
+
+    sub.on("message", (channel, message) => {
+      if (channel === "MESSAGES") {
+        io.emit("event:message", message);
+      }
+    });
+
+    io.on("event:message", (data) => {
+      // Broadcast the message to all connected clients
+      io.emit("event:message", data);
     });
   }
 
