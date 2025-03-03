@@ -2,11 +2,15 @@
 
 A scalable real-time chat application built with Next.js, Socket.IO, Redis, Apache Kafka, and PostgreSQL using a microservices architecture.
 
+# Project Flow
+![Screenshot 2025-03-03 134315](https://github.com/user-attachments/assets/b604fdfc-9edf-4622-b5d7-08df8d6b7d5e)
+
 ## Architecture Overview
 
 The system implements a distributed real-time communication platform with the following components:
 
 ### Frontend Layer
+
 
 - Next.js application with Socket.IO client
 - Real-time updates using WebSocket connections
