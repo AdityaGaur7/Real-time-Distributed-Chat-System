@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import Valkey from "iovalkey";
 import { channel } from "diagnostics_channel";
+import prismaClient from "./prisma";
 
 const pub = new Valkey({
   host: "valkey-338d5f72-adgaur027-82f1.l.aivencloud.com",
@@ -41,10 +42,15 @@ class SocketService {
       });
     });
 
-    sub.on("message", (channel, message) => {
+    sub.on("message", async (channel, message) => {
       if (channel === "MESSAGES") {
         console.log("New Message received", message);
         io.emit("event:message", message);
+        await prismaClient.message.create({
+          data: {
+            text: message,
+          },
+        });
       }
     });
 
